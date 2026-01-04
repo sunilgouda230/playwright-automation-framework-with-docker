@@ -1,10 +1,21 @@
+
+version: "3.9"
 services:
-  playwright-tests:
+
+  shard1:
     image: playwright-tests
-    container_name: playwright_runner
     environment:
-      ENV: qa
-      TEST_CASE_ID: ""
+      SHARD_INDEX: 1
+      TOTAL_SHARDS: 2
     volumes:
-      - ./playwright-report:/app/playwright-report
-    command: npx playwright test
+      - ./blob-report-1:/app/blob-report
+    command: npx playwright test --shard=1/2
+
+  shard2:
+    image: playwright-tests
+    environment:
+      SHARD_INDEX: 2
+      TOTAL_SHARDS: 2
+    volumes:
+      - ./blob-report-2:/app/blob-report
+    command: npx playwright test --shard=2/2
