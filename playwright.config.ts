@@ -24,7 +24,8 @@ export default defineConfig({
    * In CI: We use 'blob' which is required for sharding. 
    * Locally: We use 'html' for a better developer experience.
    */
-  reporter: isCI ? 'blob' : 'html',
+  // reporter: isCI ? 'blob' : 'html',
+  reporter: 'blob', 
 
   use: {
     /* Base URL loaded from your env utility */

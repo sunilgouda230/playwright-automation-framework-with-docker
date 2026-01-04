@@ -4,7 +4,8 @@
   "description": "This is a scalable solution for UI Automation using playwright and typescript.",
   "main": "index.js",
   "scripts": {
-    "test:sharded": "node run-tests.js"
+    "test:sharded": "node run-tests.js",
+    "test": "npx playwright test"
   },
   "repository": {
     "type": "git",
