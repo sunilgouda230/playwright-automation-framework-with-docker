@@ -89,14 +89,12 @@ jobs:
 
 
   # ======================================================
-  # 🧩 MERGE REPORTS (ALWAYS RUNS)
+  # 🧩 MERGE REPORTS (ALWAYS RUNS) — Playwright 1.57 syntax
   # ======================================================
   merge-report:
     runs-on: ubuntu-latest
     needs: test
-
-    # 👇 ensures merge runs regardless of failures
-    if: always()
+    if: always()   # 👉 run even if tests fail
 
     steps:
       - name: Checkout repository
@@ -122,17 +120,15 @@ jobs:
         run: npm ci
 
       # -------------------------------------
-      # 🔗 Merge reports into one
+      # 🔗 Merge reports (Playwright v1.57 expects ONE dir)
       # -------------------------------------
       - name: Merge Playwright Reports
         run: |
-          npx playwright merge-reports \
-            --reporter=html \
-            shard-reports/shard-*
+          # merges all subfolders inside shard-reports/
+          npx playwright merge-reports shard-reports
 
-          # rename to a friendly folder name
+          # rename default merged folder
           mv playwright-report merged-report
-
 
       # -------------------------------------
       # 📤 Upload Final Consolidated Report
