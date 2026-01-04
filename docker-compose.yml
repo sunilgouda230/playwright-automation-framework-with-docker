@@ -1,0 +1,10 @@
+services:
+  playwright-tests:
+    image: playwright-tests
+    container_name: playwright_runner
+    environment:
+      ENV: qa
+      TEST_CASE_ID: ""
+    volumes:
+      - ./playwright-report:/app/playwright-report
+    command: npx playwright test
