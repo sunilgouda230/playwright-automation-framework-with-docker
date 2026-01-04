@@ -2,11 +2,14 @@ name: Playwright Tests
 
 on:
   push:
-    branches: [ main, master ]
+    branches: [main, master]
   pull_request:
-    branches: [ main, master ]
+    branches: [main, master]
 
 jobs:
+  # ======================================================
+  # 🧪 SHARDED TEST EXECUTION
+  # ======================================================
   test:
     runs-on: ubuntu-latest
     timeout-minutes: 60
@@ -14,7 +17,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        shard: [1, 2, 3]   # ⬅️ change based on number of shards
+        shard: [1, 2, 3]  # number of shards
 
     steps:
       - uses: actions/checkout@v4
@@ -29,9 +32,15 @@ jobs:
       - name: Install Playwright Browsers
         run: npx playwright install --with-deps
 
+      # -------------------------------------
+      # 🐳 Build Docker image
+      # -------------------------------------
       - name: Build Docker image
         run: docker build -t pw-tests .
 
+      # -------------------------------------
+      # 🧪 Run Playwright Shard
+      # -------------------------------------
       - name: Run Playwright Shard ${{ matrix.shard }}
         run: |
           mkdir -p blob-reports/shard-${{ matrix.shard }}
@@ -39,8 +48,11 @@ jobs:
             --shard=${{ matrix.shard }}/${{ strategy.job-total }} \
             --reporter=blob \
             --output=blob-reports/shard-${{ matrix.shard }}
-        continue-on-error: true   # ⬅️ tests may fail, but report should still upload
+        continue-on-error: true
 
+      # -------------------------------------
+      # 📤 Upload Shard Report
+      # -------------------------------------
       - name: Upload shard report
         if: always()
         uses: actions/upload-artifact@v4
@@ -49,28 +61,40 @@ jobs:
           path: blob-reports/shard-${{ matrix.shard }}
           retention-days: 7
 
+  # ======================================================
+  # 🧩 MERGE SHARD REPORTS
+  # ======================================================
   merge-report:
     needs: test
     runs-on: ubuntu-latest
+    if: always()
 
     steps:
       - uses: actions/checkout@v4
 
+      # -------------------------------------
+      # ⬇ Download all shard artifacts
+      # -------------------------------------
       - name: Download all shard reports
         uses: actions/download-artifact@v4
         with:
           path: blob-reports
 
+      - name: Install dependencies
+        run: npm ci
+
+      # -------------------------------------
+      # 🔗 Merge shard reports → HTML
+      # -------------------------------------
       - name: Merge shard reports → HTML
-        if: always()
         run: |
-          npx playwright merge-reports \
-            --reporter=html \
-            blob-reports
+          npx playwright merge-reports blob-reports
           mv playwright-report merged-report
 
-      - name: Upload consolidated report
-        if: always()
+      # -------------------------------------
+      # 📤 Upload final consolidated report
+      # -------------------------------------
+      - name: Upload Consolidated Report
         uses: actions/upload-artifact@v4
         with:
           name: consolidated-playwright-report
