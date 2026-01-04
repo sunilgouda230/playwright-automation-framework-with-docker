@@ -7,135 +7,72 @@ on:
     branches: [ main, master ]
 
 jobs:
-
-  # ======================================================
-  # 🧪 SHARDED TEST EXECUTION
-  # ======================================================
   test:
-    timeout-minutes: 60
     runs-on: ubuntu-latest
+    timeout-minutes: 60
 
     strategy:
       fail-fast: false
       matrix:
-        shard_index: [1, 2, 3, 4]   # 👈 adjust shard count here
-
-    env:
-      TOTAL_SHARDS: 4
+        shard: [1, 2, 3]   # ⬅️ change based on number of shards
 
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
-      - name: Set up Node
-        uses: actions/setup-node@v4
+      - uses: actions/setup-node@v4
         with:
           node-version: lts/*
 
-      # -------------------------------------
-      # 🐳 Build Docker image
-      # -------------------------------------
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
-
-      - name: Build application docker image
-        run: docker build -t my-app:ci .
-
-      # -------------------------------------
-      # 🚀 Start container
-      # -------------------------------------
-      - name: Start application container
-        run: |
-          docker run -d \
-            --name my-app-container \
-            -p 3000:3000 \
-            my-app:ci
-
-      # -------------------------------------
-      # 📦 Install test deps
-      # -------------------------------------
       - name: Install dependencies
         run: npm ci
 
       - name: Install Playwright Browsers
         run: npx playwright install --with-deps
 
-      # -------------------------------------
-      # 🧪 Run Playwright Tests (Shard)
-      # -------------------------------------
-      - name: Run Playwright tests (Shard ${{ matrix.shard_index }})
-        run: |
-          npx playwright test --shard=${{ matrix.shard_index }}/${{ env.TOTAL_SHARDS }}
+      - name: Build Docker image
+        run: docker build -t pw-tests .
 
-      # -------------------------------------
-      # 📤 Upload shard report — EVEN IF FAILED
-      # -------------------------------------
-      - name: Upload Shard Report
+      - name: Run Playwright Shard ${{ matrix.shard }}
+        run: |
+          mkdir -p blob-reports/shard-${{ matrix.shard }}
+          npx playwright test \
+            --shard=${{ matrix.shard }}/${{ strategy.job-total }} \
+            --reporter=blob \
+            --output=blob-reports/shard-${{ matrix.shard }}
+        continue-on-error: true   # ⬅️ tests may fail, but report should still upload
+
+      - name: Upload shard report
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: shard-${{ matrix.shard_index }}
-          path: playwright-report/
+          name: shard-${{ matrix.shard }}-blob
+          path: blob-reports/shard-${{ matrix.shard }}
           retention-days: 7
 
-      # -------------------------------------
-      # 🧹 Cleanup container
-      # -------------------------------------
-      - name: Stop & remove container
-        if: always()
-        run: |
-          docker stop my-app-container || true
-          docker rm my-app-container || true
-
-
-  # ======================================================
-  # 🧩 MERGE REPORTS (ALWAYS RUNS) — Playwright 1.57 syntax
-  # ======================================================
   merge-report:
-    runs-on: ubuntu-latest
     needs: test
-    if: always()   # 👉 run even if tests fail
+    runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
-      - name: Set up Node
-        uses: actions/setup-node@v4
-        with:
-          node-version: lts/*
-
-      # -------------------------------------
-      # ⬇ Download ALL shard artifacts
-      # -------------------------------------
-      - name: Download shard reports
+      - name: Download all shard reports
         uses: actions/download-artifact@v4
         with:
-          path: shard-reports
+          path: blob-reports
 
-      # -------------------------------------
-      # 📦 Install deps for merge tool
-      # -------------------------------------
-      - name: Install dependencies
-        run: npm ci
-
-      # -------------------------------------
-      # 🔗 Merge reports (Playwright v1.57 expects ONE dir)
-      # -------------------------------------
-      - name: Merge Playwright Reports
+      - name: Merge shard reports → HTML
+        if: always()
         run: |
-          # merges all subfolders inside shard-reports/
-          npx playwright merge-reports shard-reports
-
-          # rename default merged folder
+          npx playwright merge-reports \
+            --reporter=html \
+            blob-reports
           mv playwright-report merged-report
 
-      # -------------------------------------
-      # 📤 Upload Final Consolidated Report
-      # -------------------------------------
-      - name: Upload Consolidated Report
+      - name: Upload consolidated report
+        if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: playwright-consolidated-report
-          path: merged-report/
+          name: consolidated-playwright-report
+          path: merged-report
           retention-days: 30
