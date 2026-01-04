@@ -127,8 +127,12 @@ jobs:
       - name: Merge Playwright Reports
         run: |
           npx playwright merge-reports \
-            --report-dir merged-report \
+            --reporter=html \
             shard-reports/shard-*
+
+          # rename to a friendly folder name
+          mv playwright-report merged-report
+
 
       # -------------------------------------
       # 📤 Upload Final Consolidated Report
