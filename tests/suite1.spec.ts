@@ -5,8 +5,8 @@ import Products from '../pages/product/product';
 import ProductWithsearch from '../pages/productWithsearch';
 
 
-test('Testing environment variable', async ({ page }) => {
-    const product = new Products(page);
+test('Verify add to cart functionality', async ({ page }) => {
+    const product = new ProductWithsearch(page);
     await product.clickOnProductMenu();
     console.log("Product menu clicked successfully");
 
@@ -21,16 +21,13 @@ test('Testing environment variable', async ({ page }) => {
 
     await product.clickOnProductByProductName(productName);
     console.log(`Clicked on product: ${productName}`);
-
-    await page.pause();
 });
 
-test('Search functionality', async ({ page }) => {
+test('verify Search functionality', async ({ page }) => {
     const navbar = new Navbar(page);
     await navbar.clickOnMenuItem(NavMenu.PRODUCTS);
     
     console.log("Navigated to Products page via Navbar");
-    const search = new Products(page);
     const productWithSearch = new ProductWithsearch(page);
     const productName = 'Men Tshirt';
 

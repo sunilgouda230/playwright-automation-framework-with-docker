@@ -33,4 +33,8 @@ export default class BasePage {
         await this.navbar.clickOnMenuItem(itemName);
     }
 
+    async getNavbar(): Promise<Navbar> {
+        return this.navbar;
+    }
+
 }

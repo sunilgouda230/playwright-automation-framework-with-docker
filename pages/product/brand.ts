@@ -14,6 +14,10 @@ export default class Brand {
     async getBrandTitles(): Promise<string[]> {
         return await this.brand.locator('li a').allTextContents();
     }
+    
+    async getCountOfBrands(): Promise<number> {
+        return await this.brand.locator('li a').count();
+    }
 
     async clickBrand(brand: BrandType): Promise<void> {
         await this.brand.locator(`li a:has-text("${brand}")`).click();

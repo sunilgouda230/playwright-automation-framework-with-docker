@@ -2,7 +2,7 @@ import {Locator, Page} from '@playwright/test';
 import CategoryType from '../../constants/products/category/categorytype';
 import CategorySubType from '../../constants/products/category/categorysubtypes';
 
-export default class CategoryPage {
+export default class Category {
 
     page:Page;
     category:Locator
@@ -16,9 +16,17 @@ export default class CategoryPage {
         return await this.category.locator('h4 a').allTextContents();
     }
 
+    async getCountOfCategories(): Promise<number> {
+        return await this.category.locator('h4 a').count();
+    }
+
     async getSubCategoryTitles(category:CategoryType): Promise<string[]> {
         const products = await this.category.locator(`#${category} a`).allTextContents();
         return products;
+    }
+
+    async getCountOfSubCategories(category:CategoryType): Promise<number> {
+        return await this.category.locator(`#${category} a`).count();
     }
 
     async clickCategory(category: CategoryType): Promise<void> {

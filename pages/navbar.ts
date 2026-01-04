@@ -15,4 +15,8 @@ export default class Navbar {
         await this.navLocators.locator(`text=${itemName}`).click();
     }
 
+    async getMenuItemCount(): Promise<number> {
+        return await this.navLocators.count();  
+    }
+
 }
