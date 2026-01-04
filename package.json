@@ -1,0 +1,27 @@
+{
+  "name": "playwright-automation-framework-with-docker",
+  "version": "1.0.0",
+  "description": "This is a scalable solution for UI Automation using playwright and typescript.",
+  "main": "index.js",
+  "scripts": {},
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/sunilgouda230/playwright-automation-framework-with-docker.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/sunilgouda230/playwright-automation-framework-with-docker/issues"
+  },
+  "homepage": "https://github.com/sunilgouda230/playwright-automation-framework-with-docker#readme",
+  "devDependencies": {
+    "@playwright/test": "^1.57.0",
+    "@types/dotenv": "^6.1.1",
+    "@types/node": "^25.0.3"
+  },
+  "dependencies": {
+    "dotenv": "^17.2.3"
+  }
+}
