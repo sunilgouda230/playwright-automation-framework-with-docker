@@ -53,8 +53,6 @@ jobs:
       # 🧪 Run Playwright Tests
       # -------------------------------------
       - name: Run Playwright tests
-        env:
-          BASE_URL: http://localhost:3000
         run: npx playwright test
 
       # -------------------------------------
