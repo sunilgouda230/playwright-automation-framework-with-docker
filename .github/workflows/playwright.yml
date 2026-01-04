@@ -7,22 +7,14 @@ on:
     branches: [main, master]
 
 jobs:
-  # ======================================================
-  # 🧪 SHARDED TEST EXECUTION
-  # ======================================================
   test:
     runs-on: ubuntu-latest
-    timeout-minutes: 60
-
     strategy:
       fail-fast: false
       matrix:
-        shard: [1, 2, 3]        # shard index
-        totalShards: [3]        # total shards
-
+        shard: [1, 2, 3]
     steps:
       - uses: actions/checkout@v4
-
       - uses: actions/setup-node@v4
         with:
           node-version: lts/*
@@ -33,78 +25,44 @@ jobs:
       - name: Install Playwright Browsers
         run: npx playwright install --with-deps
 
-      # -------------------------------------
-      # 🐳 Build Docker image
-      # -------------------------------------
-      - name: Build Docker image
-        run: docker build -t pw-tests .
-
-      # -------------------------------------
-      # 🧪 Run Playwright Shard
-      # -------------------------------------
       - name: Run Playwright Shard ${{ matrix.shard }}
-        run: |
-          mkdir -p blob-reports/shard-${{ matrix.shard }}
-          npx playwright test \
-            --shard=${{ matrix.shard }}/${{ matrix.totalShards }} \
-            --reporter=blob \
-            --output=blob-reports/shard-${{ matrix.shard }}
-        continue-on-error: true
+        # We remove --output here so the blob reporter uses its default location
+        run: npx playwright test --shard=${{ matrix.shard }}/3
 
-      # -------------------------------------
-      # 📤 Debug: list report files
-      # -------------------------------------
-      - name: List shard report folder
-        run: ls -R blob-reports/shard-${{ matrix.shard }}
-
-      # -------------------------------------
-      # 📤 Upload Shard Report
-      # -------------------------------------
       - name: Upload shard report
         if: always()
         uses: actions/upload-artifact@v4
         with:
           name: shard-${{ matrix.shard }}-blob
-          path: blob-reports/shard-${{ matrix.shard }}
-          retention-days: 7
+          path: blob-report/ # Playwright's default blob output
+          retention-days: 1
 
-  # ======================================================
-  # 🧩 MERGE SHARD REPORTS
-  # ======================================================
   merge-report:
     needs: test
     runs-on: ubuntu-latest
     if: always()
-
     steps:
       - uses: actions/checkout@v4
-
-      # -------------------------------------
-      # ⬇ Download all shard artifacts
-      # -------------------------------------
-      - name: Download all shard reports
-        uses: actions/download-artifact@v4
+      - uses: actions/setup-node@v4
         with:
-          path: blob-reports
+          node-version: lts/*
 
       - name: Install dependencies
         run: npm ci
 
-      # -------------------------------------
-      # 🔗 Merge shard reports → HTML
-      # -------------------------------------
-      - name: Merge shard reports → HTML
-        run: |
-          ls -R blob-reports   # debug: verify all shards are present
-          npx playwright merge-reports blob-reports
-          mv playwright-report merged-report
+      - name: Download all shard reports
+        uses: actions/download-artifact@v4
+        with:
+          path: all-blob-reports
+          pattern: shard-*-blob
+          merge-multiple: true # This flattens all .blob files into one folder
 
-      # -------------------------------------
-      # 📤 Upload final consolidated report
-      # -------------------------------------
+      - name: Merge shard reports
+        run: npx playwright merge-reports --reporter=html ./all-blob-reports
+
       - name: Upload Consolidated Report
         uses: actions/upload-artifact@v4
         with:
           name: consolidated-playwright-report
-          path: merged-report
+          path: playwright-report
           retention-days: 30
