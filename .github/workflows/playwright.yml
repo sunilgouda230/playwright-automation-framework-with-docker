@@ -1,68 +1,40 @@
-name: Playwright Tests
-
+name: Playwright Sharded Tests
 on:
   push:
-    branches: [main, master]
+    branches: [ main, master ]
   pull_request:
-    branches: [main, master]
+    branches: [ main, master ]
 
 jobs:
   test:
+    timeout-minutes: 60
     runs-on: ubuntu-latest
-    strategy:
-      fail-fast: false
-      matrix:
-        shard: [1, 2, 3]
+    
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-        with:
-          node-version: lts/*
+    - name: Checkout repository
+      uses: actions/checkout@v4
 
-      - name: Install dependencies
-        run: npm ci
+    - name: Set up Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: 18
+        cache: 'npm'
 
-      - name: Install Playwright Browsers
-        run: npx playwright install --with-deps
+    - name: Install dependencies
+      run: npm install
 
-      - name: Run Playwright Shard ${{ matrix.shard }}
-        # We remove --output here so the blob reporter uses its default location
-        run: npx playwright test --shard=${{ matrix.shard }}/3
+    - name: Build and Run Sharded Tests
+      # This runs your custom script which handles Docker and Merging
+      # We set CI=true so your playwright.config.json logic triggers
+      run: node run-tests.js --shard=4
+      env:
+        CI: true
+        BASE_URL: ${{ secrets.BASE_URL }} # If you use secrets
 
-      - name: Upload shard report
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: shard-${{ matrix.shard }}-blob
-          path: blob-report/ # Playwright's default blob output
-          retention-days: 1
-
-  merge-report:
-    needs: test
-    runs-on: ubuntu-latest
-    if: always()
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-        with:
-          node-version: lts/*
-
-      - name: Install dependencies
-        run: npm ci
-
-      - name: Download all shard reports
-        uses: actions/download-artifact@v4
-        with:
-          path: all-blob-reports
-          pattern: shard-*-blob
-          merge-multiple: true # This flattens all .blob files into one folder
-
-      - name: Merge shard reports
-        run: npx playwright merge-reports --reporter=html ./all-blob-reports
-
-      - name: Upload Consolidated Report
-        uses: actions/upload-artifact@v4
-        with:
-          name: consolidated-playwright-report
-          path: playwright-report
-          retention-days: 30
+    - name: Upload Consolidated HTML Report
+      if: always() # Upload even if tests failed
+      uses: actions/upload-artifact@v4
+      with:
+        name: playwright-report
+        path: playwright-report/
+        retention-days: 30
