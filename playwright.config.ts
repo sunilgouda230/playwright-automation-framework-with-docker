@@ -11,9 +11,9 @@ export default defineConfig({
   retries: isCI ? 2 : 0,
   workers: isCI ? 1 : undefined,
 
-  // Blob reporter in CI for merging, HTML locally
+  // ✅ Blob reporter in CI (all tests), HTML locally
   reporter: isCI
-    ? [['blob']]
+    ? [['blob', { all: true }]]  // ← generate blob for all tests
     : [['html', { open: 'never' }]],
 
   use: {
