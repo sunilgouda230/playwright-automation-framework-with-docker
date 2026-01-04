@@ -1,21 +1,20 @@
-
-version: "3.9"
-services:
-
-  shard1:
-    image: playwright-tests
-    environment:
-      SHARD_INDEX: 1
-      TOTAL_SHARDS: 2
-    volumes:
-      - ./blob-report-1:/app/blob-report
-    command: npx playwright test --shard=1/2
-
-  shard2:
-    image: playwright-tests
-    environment:
-      SHARD_INDEX: 2
-      TOTAL_SHARDS: 2
-    volumes:
-      - ./blob-report-2:/app/blob-report
-    command: npx playwright test --shard=2/2
+{
+  "services": {
+    "shard1": {
+      "image": "playwright-tests",
+      "container_name": "playwright-shard-1",
+      "volumes": [
+        "/Users/kundansuryansh/Documents/playwright-automation-framework-with-docker/blob-report/shard1:/app/blob-report"
+      ],
+      "command": "npm test -- --shard=1/2"
+    },
+    "shard2": {
+      "image": "playwright-tests",
+      "container_name": "playwright-shard-2",
+      "volumes": [
+        "/Users/kundansuryansh/Documents/playwright-automation-framework-with-docker/blob-report/shard2:/app/blob-report"
+      ],
+      "command": "npm test -- --shard=2/2"
+    }
+  }
+}

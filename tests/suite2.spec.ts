@@ -36,7 +36,6 @@ test('verify category count on product page', async ({ page }) => {
     console.log("Product menu clicked successfully");
 
     const categoryCount = await product.getCategory().getCountOfCategories();
-
     expect(categoryCount).toBe(3);
 
 });
