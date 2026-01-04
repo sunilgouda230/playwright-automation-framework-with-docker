@@ -17,7 +17,8 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        shard: [1, 2, 3]  # number of shards
+        shard: [1, 2, 3]        # shard index
+        totalShards: [3]        # total shards
 
     steps:
       - uses: actions/checkout@v4
@@ -45,10 +46,16 @@ jobs:
         run: |
           mkdir -p blob-reports/shard-${{ matrix.shard }}
           npx playwright test \
-            --shard=${{ matrix.shard }}/${{ strategy.job-total }} \
+            --shard=${{ matrix.shard }}/${{ matrix.totalShards }} \
             --reporter=blob \
             --output=blob-reports/shard-${{ matrix.shard }}
         continue-on-error: true
+
+      # -------------------------------------
+      # 📤 Debug: list report files
+      # -------------------------------------
+      - name: List shard report folder
+        run: ls -R blob-reports/shard-${{ matrix.shard }}
 
       # -------------------------------------
       # 📤 Upload Shard Report
@@ -88,6 +95,7 @@ jobs:
       # -------------------------------------
       - name: Merge shard reports → HTML
         run: |
+          ls -R blob-reports   # debug: verify all shards are present
           npx playwright merge-reports blob-reports
           mv playwright-report merged-report
 

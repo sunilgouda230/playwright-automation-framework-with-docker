@@ -11,7 +11,7 @@ export default defineConfig({
   retries: isCI ? 2 : 0,
   workers: isCI ? 1 : undefined,
 
-  // ✅ Blob reporter for CI shards, HTML for local runs
+  // Blob reporter in CI for merging, HTML locally
   reporter: isCI
     ? [['blob']]
     : [['html', { open: 'never' }]],
